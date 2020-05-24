@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { chan, select } from './csp.js';
+import { chan, select } from 'https://creatcodebuild.github.io/csp/dist/csp.js';
 function SortVisualizationComponent(id, arrays) {
     let ele = document.getElementById(id);
     let stop = chan();
@@ -148,7 +148,6 @@ function controlButton(stop, resume) {
     };
 }
 async function main() {
-    // let svg = document.getElementById("svg");
     // init an array
     let array = [];
     for (let i = 0; i < 50; i++) {
@@ -164,8 +163,6 @@ async function main() {
     let s1 = InsertionSort(array, insertQueue);
     let s2 = MergeSort(array, mergeQueue);
     console.log('after sort');
-    // let render = paintArray(svg, document, array, insertQueue, mergeQueue, stop, resume);
-    // Promise.all([s1, s2, render])
     let mergeQueue2 = (() => {
         let c = chan();
         (async () => {
@@ -183,21 +180,9 @@ async function main() {
         return c;
     })();
     console.log(mergeQueue2);
-    SortVisualizationComponent('insertion-sort', insertQueue);
-    SortVisualizationComponent('merge-sort', mergeQueue2);
-    // let client = await WebSocketClient('ws://localhost:8081');
-    // let i = 0;
-    // while(++i) {
-    //     // await client.put(i);
-    //     // console.log(1);
-    //     // Nice, now I have seletable web socket connections
-    //     // Now just need to implement a shuffle algorithm for selection fairness
-    //     let x = await select([
-    //         [client, (ele) => ele],
-    //         [mergeQueue2, (ele) => ele]
-    //     ])
-    //     console.log('pop', x);
-    // }
+    // SortVisualizationComponent('insertion-sort', insertQueue);
+    // SortVisualizationComponent('merge-sort', mergeQueue2);
+    UI(stop, resume, array);
 }
 main();
 async function needToStop(stop, resume) {
@@ -225,4 +210,46 @@ async function needToStop(stop, resume) {
         }
     })();
     return stopResume;
+}
+function UI(stop, resume, array) {
+    Vue.component('sort-visualization', {
+        props: ['name'],
+        data() {
+            return {
+                stopped: false,
+                state: 'stop',
+                array: []
+            };
+        },
+        methods: {
+            async click(event) {
+                this.stopped = !this.stopped;
+                if (this.stopped) {
+                    this.state = 'resume';
+                    await stop.put(null);
+                }
+                else {
+                    console.log(this.array);
+                    this.state = 'stop';
+                    await resume.put(null);
+                }
+            }
+        },
+        template: `
+        <div>
+        <div> {{name}} </div>
+        <button v-on:click="click"> {{ state }} </button>
+        <svg>
+            <rect v-for="i in array" x="120" width="5" height="10" rx="15" />
+        </svg>
+        </div>
+        `
+    });
+    console.log('UI');
+    console.log(array);
+    let iSort = new Vue({
+        el: '#insertion-sort'
+    });
+    iSort.array = array;
+    new Vue({ el: '#merge-sort' });
 }

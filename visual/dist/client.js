@@ -1,5 +1,6 @@
 // Create WebSocket connection.
-import { chan } from "./csp.js";
+// @ts-ignore
+import { chan } from 'https://creatcodebuild.github.io/csp/dist/csp.js';
 class WC {
     constructor(receive, readyChan, socket) {
         this.receive = receive;
@@ -42,4 +43,16 @@ export async function WebSocketClient(url) {
         await receive.put(event.data);
     });
     return new WC(receive, ready, socket);
+}
+export class GraphQLSubscriptionClient {
+    constructor(webSocketClient) {
+        this.webSocketClient = webSocketClient;
+    }
+    async pop() {
+        return this.webSocketClient.pop();
+    }
+}
+export async function GraphQLSubscription(document, webSocketClient) {
+    await webSocketClient.put(document);
+    return new GraphQLSubscriptionClient(webSocketClient);
 }

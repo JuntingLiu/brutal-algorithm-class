@@ -1,6 +1,6 @@
 // Create WebSocket connection.
-
-import { chan, SelectableChannel } from "./csp.js";
+// @ts-ignore
+import { chan, SelectableChannel } from 'https://creatcodebuild.github.io/csp/dist/csp.js';
 
 
 class WC<T> implements SelectableChannel<T> {
@@ -53,4 +53,20 @@ export async function WebSocketClient(url: string): Promise<WC<any>> {
         await receive.put(event.data);
     });
     return new WC(receive, ready, socket);
+}
+
+export class GraphQLSubscriptionClient implements SelectableChannel {
+
+    constructor(private webSocketClient: WC<string>) {}
+
+    async pop() {
+        return this.webSocketClient.pop()
+    }
+
+}
+
+
+export async function GraphQLSubscription(document: string, webSocketClient: WC<string>): Promise<GraphQLSubscriptionClient> {
+    await webSocketClient.put(document);
+    return new GraphQLSubscriptionClient(webSocketClient);
 }
